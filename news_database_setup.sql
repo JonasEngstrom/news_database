@@ -49,6 +49,8 @@ SELECT
         END
     clinical_risk,
     CASE
+        WHEN total_points IS 0 THEN
+            'Senast inom 12 timmar'
         WHEN (points_respiratory_rate >= 3 OR
             points_oxygen_saturation >= 3 OR
             points_supplemental_oxygen >= 3 OR
@@ -57,15 +59,15 @@ SELECT
             points_consciousness >= 3 OR
             points_temperature >= 3) AND
             total_points < 5 THEN
-            'Brådskande avdelningsbaserade åtgärder'
+            'Senast inom 1 timme'
         WHEN total_points BETWEEN 5 AND 6 THEN
-            'Brådskande åtgärder'
+            'Senast inom 1 timme'
         WHEN total_points >= 7 THEN
-            'Akuta åtgärder'
+            'Överväg kontinuerlig övervakning'
         ELSE
-            'Avdelningsbaserade åtgärder'
+            'Senast inom 4-6 timmar'
         END
-    response_level
+    next_measurement
     FROM
     (
     SELECT
@@ -166,4 +168,3 @@ SELECT
             news_parameters
         )
     );
-    

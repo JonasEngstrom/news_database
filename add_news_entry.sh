@@ -57,3 +57,7 @@ VALUES (
 echo 'Följande rad lades till i databasen. Vänligen kontrollera att den är korrekt.'
 
 sqlite3 $1 -cmd ".headers on" ".mode columns" "SELECT * FROM news_parameters WHERE time IS '$observation_time'"
+
+echo 'Rekommendation angående ny NEWS-kontroll:'
+
+sqlite3 $1 "SELECT next_measurement FROM news_points WHERE time IS '$observation_time'"
