@@ -31,7 +31,7 @@ read temperature
 echo "Kommentarer om mätningen ['textsträng']:"
 read comment
 
-sqlite3 news_database.db "INSERT INTO news_parameters (
+sqlite3 $1 "INSERT INTO news_parameters (
     time,
     respiratory_rate,
     oxygen_saturation,
@@ -56,4 +56,4 @@ VALUES (
 
 echo 'Följande rad lades till i databasen. Vänligen kontrollera att den är korrekt.'
 
-sqlite3 news_database.db -cmd ".headers on" ".mode columns" "SELECT * FROM news_parameters WHERE time IS '$observation_time'"
+sqlite3 $1 -cmd ".headers on" ".mode columns" "SELECT * FROM news_parameters WHERE time IS '$observation_time'"
