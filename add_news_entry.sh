@@ -61,3 +61,7 @@ sqlite3 $1 -cmd ".headers on" ".mode columns" "SELECT * FROM news_parameters WHE
 echo 'Rekommendation angående ny NEWS-kontroll:'
 
 sqlite3 $1 "SELECT next_measurement FROM news_points WHERE time IS '$observation_time'"
+
+Rscript render_news_report.R
+
+echo 'Se filen news_report.html för en grafisk presentation av mätvärdena i databasen.'

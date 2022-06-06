@@ -1,0 +1,124 @@
+---
+title: "NEWS-rapport"
+date: '`r strftime(Sys.time(), format = "%Y-%m-%d %H:%M")`'
+output: html_document
+params:
+    database_file:
+        value: x
+---
+
+```{r, echo=FALSE, message = FALSE}
+library(tidyverse)
+library(DBI)
+library(RSQLite)
+```
+
+```{r, echo=FALSE}
+db <- dbConnect(SQLite(), params$database_file)
+```
+
+```{r, echo=FALSE}
+parameter_table <- db %>%
+    dbReadTable('news_parameters') %>%
+    tibble()
+
+points_table <- db %>%
+    dbReadTable('news_points') %>%
+    tibble()
+```
+
+## Sammanfattning av senaste kontroll
+
+```{r, echo=FALSE}
+latest_measurement <- points_table %>%
+    filter(time == max(time)) %>%
+    select(time, total_points, clinical_risk, next_measurement)
+```
+
+Senaste NEWS-mätningen gjordes `r latest_measurement$time` och gav `r latest_measurement$total_points` poäng, vilket innebär `r latest_measurement$clinical_risk %>% tolower()` klinisk risk och en rekommendation om ny kontroll `r latest_measurement$next_measurement %>% tolower()`.
+
+## Utveckling av mätvärden över tid
+
+```{r, echo=FALSE, fig.align='center'}
+points_table %>%
+#    select(!c(total_points, clinical_risk, next_measurement)) %>%
+    select(time,
+           Medvetandegrad=points_consciousness,
+           `Hjärtfrekvens`=points_heart_rate,
+           `Syrgasmättnad`=points_oxygen_saturation,
+           Andningsfrekvens=points_respiratory_rate,
+           `Tillförd syrgas`=points_supplemental_oxygen,
+           Temperatur=points_temperature) %>%
+    pivot_longer(cols=!time) %>%
+    ggplot(aes(x=time, y=value, fill=name)) +
+        geom_bar(stat='identity') +
+        scale_y_continuous(limits=c(0,20), breaks=seq(0,20,2)) +
+        theme(axis.text.x = element_text(angle = 90),
+              legend.position = 'bottom') +
+        labs(title='Fördelning av NEWS-poäng',
+             x='Tidpunkt',
+             y='Antal NEWS-poäng',
+             fill='Poängkategorier')
+```
+
+```{r, fig.width=10, fig.height=20, echo=FALSE, fig.align='center'}
+plot_names = c('heart_rate'='Hjärtfrekvens (slag/min)',
+               'oxygen_saturation'='Syrgasmättnad (%)',
+               'respiratory_rate'='Andningsfrekvens (andetag/min)',
+               'systolic_pressure'='Systoliskt blodtryck (mmHg)',
+               'temperature'='Kroppstemperatur (°C)')
+
+parameter_table %>%
+    select(!c(supplemental_oxygen, consciousness, comment)) %>%
+    pivot_longer(cols=!time) %>%
+    ggplot(aes(time, value, group=1)) +
+        geom_line() +
+        facet_wrap(vars(name),
+                   ncol=1,
+                   scales='free_y',
+                   labeller=labeller(name=plot_names),
+                   strip.position = 'right') +
+        theme(axis.text.x = element_text(angle = 90)) +
+        labs(title='Utveckling av kontinuerliga NEWS-parametrar',
+             x='Tidpunkt',
+             y='Uppmätt värde')
+```
+
+## Korrelation mellan hjärtfrekvens och kroppstemperatur
+
+```{r, echo=FALSE}
+db %>%
+    dbReadTable('news_parameters') %>%
+    tibble() %>%
+    select(heart_rate, temperature) ->
+    heart_temp_table
+
+heart_temp_table %>%
+    pull(temperature) ->
+    x
+
+heart_temp_table %>%
+    pull(heart_rate) ->
+    y
+
+lm_model <- lm(y~x)
+
+a <- lm_model$coefficients[1]
+b <- lm_model$coefficients[2]
+```
+
+Datamaterialet ger följande samband medllan kroppstemperatur (x) och hjärtfrekvens (y):
+
+$y(x) = `r round(b, 2)`x - `r round(abs(a), 2)`$
+
+```{r, echo=FALSE, fig.align='center'}
+parameter_table %>%
+    select(temperature, heart_rate) %>%
+    ggplot(aes(x=temperature, y=heart_rate)) +
+        geom_point() +
+        geom_line(aes(y=predict(lm_model))) +
+        labs(title='Observerad jämfört med uträknad hjärtfrekvens',
+             subtitle='Punkter visar observerade värden, linje visar uträknade värden.',
+             x='Kroppstemperatur (°C)',
+             y='Hjärtfrekvens (slag/min)')
+```
