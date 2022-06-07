@@ -62,6 +62,6 @@ echo 'Rekommendation angående ny NEWS-kontroll:'
 
 sqlite3 $1 "SELECT next_measurement FROM news_points WHERE time IS '$observation_time'"
 
-Rscript render_news_report.R
+Rscript render_news_report.R $1
 
 echo 'Se filen news_report.html för en grafisk presentation av mätvärdena i databasen.'

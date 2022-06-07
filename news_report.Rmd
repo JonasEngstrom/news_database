@@ -8,7 +8,9 @@ params:
 ---
 
 ```{r, echo=FALSE, message = FALSE}
-library(tidyverse)
+library(dplyr, warn.conflicts = FALSE)
+library(tidyr, warn.conflicts = FALSE)
+library(ggplot2, warn.conflicts = FALSE)
 library(DBI)
 library(RSQLite)
 ```
