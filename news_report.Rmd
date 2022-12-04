@@ -109,7 +109,7 @@ a <- lm_model$coefficients[1]
 b <- lm_model$coefficients[2]
 ```
 
-Datamaterialet ger följande samband medllan kroppstemperatur (x) och hjärtfrekvens (y):
+Datamaterialet ger följande samband mellan kroppstemperatur (x) och hjärtfrekvens (y):
 
 $y(x) = `r round(b, 2)`x - `r round(abs(a), 2)`$
 
